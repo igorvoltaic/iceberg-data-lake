@@ -67,9 +67,9 @@ This starts:
 The Hive Metastore and Iceberg tables expect a bucket named `warehouse`. Create it using the MinIO client:
 
 ```bash
-docker run --rm minio/mc:latest alias set myminio http://minio:9000 minioadmin minioadmin
+docker compose exec minio mc alias set myminio http://minio:9000 minioadmin minioadmin
 
-docker run --rm minio/mc:latest mb myminio/warehouse
+docker compose exec minio mc mb myminio/warehouse
 ```
 
 > Replace `iceberg-data-lake_default` with the actual network name if your project name is different (run `docker network ls` to confirm).
