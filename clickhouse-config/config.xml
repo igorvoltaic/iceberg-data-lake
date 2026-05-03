@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<clickhouse>
+    <s3>
+        <path_style_access>true</path_style_access>
+        <access_key_id>minioadmin</access_key_id>
+        <secret_access_key>minioadmin</secret_access_key>
+        <region>us-east-1</region>
+    </s3>
+            <!-- Add default profile settings -->
+    <profiles>
+        <default>
+            <allow_experimental_database_iceberg>1</allow_experimental_database_iceberg>
+            <allow_experimental_database_unity_catalog>1</allow_experimental_database_unity_catalog>
+            <allow_experimental_database_glue_catalog>1</allow_experimental_database_glue_catalog>
+            <allow_experimental_database_hms_catalog>1</allow_experimental_database_hms_catalog>
+            <allow_experimental_database_paimon_rest_catalog>1</allow_experimental_database_paimon_rest_catalog>
+        </default>
+    </profiles>
+</clickhouse>

@@ -1,0 +1,17 @@
+# JAR dependencies
+hive-lib/*.jar
+
+# Docker volumes (if any local volume directories exist)
+volumes/
+data/
+
+# Environment files
+.env
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+
+# OS junk
+.DS_Store

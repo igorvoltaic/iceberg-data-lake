@@ -1,0 +1,108 @@
+services:
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_USER: hive
+      POSTGRES_PASSWORD: hive
+      POSTGRES_DB: metastore
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hive"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  hms:
+    image: apache/hive:4.0.0
+    container_name: hms
+    environment:
+      SERVICE_NAME: metastore
+      DB_DRIVER: postgres
+      METASTORE_DB_HOST: postgres
+      METASTORE_DB_PORT: 5432
+      METASTORE_DB_USER: hive
+      METASTORE_DB_PASSWORD: hive
+      METASTORE_DB_NAME: metastore
+    ports:
+      - "9083:9083"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    volumes:
+      - ./hive-config/hive-site.xml:/opt/hive/conf/hive-site.xml:ro
+      - ./hive-lib/postgresql-42.7.3.jar:/opt/hive/lib/postgresql-42.7.3.jar
+      - ./hive-lib/hadoop-aws-3.3.4.jar:/opt/hive/lib/hadoop-aws-3.3.4.jar
+      - ./hive-lib/aws-java-sdk-bundle-1.12.262.jar:/opt/hive/lib/aws-java-sdk-bundle-1.12.262.jar
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "HiveMetaStore"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  trino:
+    image: trinodb/trino:476
+    container_name: trino
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./trino-catalog:/etc/trino/catalog:ro
+    depends_on:
+      hms:
+        condition: service_healthy
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:26.3
+    container_name: clickhouse
+    ports:
+      - "8123:8123"
+      - "9003:9000" # Native port on host 9001
+    environment:
+      AWS_EC2_METADATA_DISABLED: true
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: clickhouse
+      CLICKHOUSE_DB: default
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./clickhouse-config/config.xml:/etc/clickhouse-server/config.d/s3.xml:ro
+    depends_on:
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--port", "8123", "-q", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+# ==================== VOLUMES ====================
+volumes:
+  minio_data:
+  postgres_data:
+  clickhouse_data:
