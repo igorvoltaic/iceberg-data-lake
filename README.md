@@ -175,8 +175,8 @@ docker compose exec clickhouse clickhouse-client
 ```
 
 ```sql
-SELECT count() FROM iceberg_lake.demo.customers;
-SELECT * FROM iceberg_lake.demo.orders LIMIT 5;
+SELECT count() FROM iceberg_lake.`demo.customers`;
+SELECT * FROM iceberg_lake.`demo.orders` LIMIT 5;
 ```
 
 You should see the same data that was inserted via Trino – a single source of truth.
